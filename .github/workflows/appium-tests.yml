@@ -10,6 +10,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      - name: Setup Java 17 (for sdkmanager)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Setup Java 8 (for Appium & Android SDK)
         uses: actions/setup-java@v3
         with:
@@ -33,7 +39,10 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Accept Android SDK Licenses
-        run: yes | sdkmanager --licenses
+        run: |
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          export PATH=$JAVA_HOME/bin:$PATH
+          yes | sdkmanager --licenses
 
       - name: Install Android Emulator
         run: |
@@ -73,6 +82,11 @@ jobs:
 
       - name: Run Appium Tests
         run: ./gradlew test
+
+      - name: Stop Appium Server & Emulator
+        run: |
+          pkill -f appium
+          adb emu kill
 
       - name: Stop Appium Server & Emulator
         run: |
