@@ -16,12 +16,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Java 8 (for Appium and Android SDK compatibility)
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '8'
-
       - name: Install Node.js & Appium
         uses: actions/setup-node@v3
         with:
