@@ -10,20 +10,23 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Setup Java 17
+      - name: Setup Java 17 (for Appium)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install JAXB for Java 11+
-        run: sudo apt-get install -y libjaxb-java
-
-      - name: Install Java 8 for SDK tools
+      - name: Install Java 8 (for Android SDK)
         run: sudo apt-get install -y openjdk-8-jdk
 
-      - name: Use Java 8 for SDK Setup
-        run: export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      - name: Set Java 8 for SDK Manager
+        run: |
+          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+          export PATH=$JAVA_HOME/bin:$PATH
+          java -version
+
+      - name: Install JAXB for Java 11+
+        run: sudo apt-get install -y libjaxb-java
 
       - name: Install Node.js & Appium
         uses: actions/setup-node@v3
@@ -49,7 +52,6 @@ jobs:
 
       - name: Verify Emulator Installation
         run: |
-          export ANDROID_HOME=/usr/local/lib/android/sdk
           ls -la $ANDROID_HOME/emulator || echo "Emulator directory not found!"
           ls -la $ANDROID_HOME/platform-tools || echo "Platform-tools directory not found!"
 
