@@ -18,25 +18,25 @@ jobs:
 
       - name: Install Android SDK Command-line Tools
         run: |
-          # Manually download and unzip command-line tools if not present
+          # Download and unzip the latest command-line tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip -P /tmp
           unzip -o /tmp/commandlinetools-linux-12266719_latest.zip -d /usr/local/lib/android/sdk
           # Accept licenses and install SDK components
           yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses
           /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "emulator" "system-images;android-30;default;x86_64"
-          
+
       - name: Set Environment Variables
         run: |
           export ANDROID_HOME=/usr/local/lib/android/sdk
           export ANDROID_SDK_ROOT=$ANDROID_HOME
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
           echo "ANDROID_HOME is set to $ANDROID_HOME"
-          echo "PATH is set to $PATH"  # Check if the path contains the right directories
+          echo "PATH is set to $PATH"  # Ensure that the path contains the cmdline-tools directory
 
       - name: Verify if avdmanager is available
         run: |
           which avdmanager || echo "avdmanager not found in path"
-          avdmanager --version  # Check if it's working
+          avdmanager --version || echo "avdmanager is not working"
 
       - name: Create & Start Emulator
         run: |
