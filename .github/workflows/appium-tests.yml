@@ -71,7 +71,6 @@ jobs:
 
           echo "Waiting for emulator to boot..."
           adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
-
           echo "Emulator is ready!"
 
       - name: Start Appium Server
