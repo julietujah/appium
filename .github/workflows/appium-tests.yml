@@ -22,12 +22,6 @@ jobs:
           distribution: 'temurin'
           java-version: '8'
 
-      - name: Set Java 8 for SDK Manager
-        run: |
-          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
-          export PATH=$JAVA_HOME/bin:$PATH
-          java -version
-
       - name: Install Node.js & Appium
         uses: actions/setup-node@v3
         with:
@@ -38,7 +32,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Accept Android SDK Licenses
+      - name: Accept Android SDK Licenses with JDK 17
         run: |
           export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
           export PATH=$JAVA_HOME/bin:$PATH
