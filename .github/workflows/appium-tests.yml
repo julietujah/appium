@@ -19,6 +19,12 @@ jobs:
       - name: Install JAXB for Java 11+
         run: sudo apt-get install -y libjaxb-java
 
+      - name: Install Java 8 for SDK tools
+        run: sudo apt-get install -y openjdk-8-jdk
+
+      - name: Use Java 8 for SDK Setup
+        run: export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
       - name: Install Node.js & Appium
         uses: actions/setup-node@v3
         with:
