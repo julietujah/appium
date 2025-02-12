@@ -33,15 +33,18 @@ jobs:
           echo "ANDROID_HOME is set to $ANDROID_HOME"
           echo "PATH is set to $PATH"  # Ensure that the path contains the cmdline-tools directory
 
-      - name: Verify if avdmanager is available
-        run: |
-          which avdmanager || echo "avdmanager not found in path"
-          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --list || echo "sdkmanager is not working"
-
       - name: Create Emulator AVD
         run: |
+          # Install system image and create AVD
           /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;default;x86_64"
-          /usr/local/lib/android/sdk/emulator/emulator -avd test_emulator -no-audio -no-window -gpu off &
+          echo "no" | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
+
+      - name: List AVDs
+        run: /usr/local/lib/android/sdk/emulator/emulator -list-avds || echo "No AVDs found!"
+
+      - name: Start Emulator
+        run: |
+          nohup $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-window -gpu off &
           echo "Waiting for emulator to boot..."
           adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
           echo "Emulator is ready!"
@@ -51,11 +54,6 @@ jobs:
 
       - name: Run Appium Tests
         run: ./gradlew test
-
-      - name: Stop Appium Server & Emulator
-        run: |
-          pkill -f appium
-          adb emu kill
 
       - name: Stop Appium Server & Emulator
         run: |
