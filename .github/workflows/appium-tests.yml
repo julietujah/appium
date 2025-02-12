@@ -24,17 +24,22 @@ jobs:
           # Accept licenses and install SDK components
           yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses
           /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "emulator" "system-images;android-30;default;x86_64"
-
+          
       - name: Set Environment Variables
         run: |
           export ANDROID_HOME=/usr/local/lib/android/sdk
           export ANDROID_SDK_ROOT=$ANDROID_HOME
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
           echo "ANDROID_HOME is set to $ANDROID_HOME"
+          echo "PATH is set to $PATH"  # Check if the path contains the right directories
+
+      - name: Verify if avdmanager is available
+        run: |
+          which avdmanager || echo "avdmanager not found in path"
+          avdmanager --version  # Check if it's working
 
       - name: Create & Start Emulator
         run: |
-          # Ensure avdmanager is available in the path
           avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
           emulator -list-avds || echo "No AVDs found!"
           nohup $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-window -gpu off &
