@@ -18,12 +18,12 @@ jobs:
 
       - name: Install JAXB Dependencies for Java 11+
         run: |
-          # Manually download and install JAXB API and runtime jars (version 2.2.11)
-          wget https://repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-api/2.2.11/jaxb-api-2.2.11.jar -P /tmp
-          wget https://repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-runtime/2.2.11/jaxb-runtime-2.2.11.jar -P /tmp
+          # Use an alternative repo like JCenter or Sonatype for JAXB
+          wget https://jcenter.bintray.com/org/glassfish/jaxb/jaxb-api/2.3.0/jaxb-api-2.3.0.jar -P /tmp
+          wget https://jcenter.bintray.com/org/glassfish/jaxb/jaxb-runtime/2.3.0/jaxb-runtime-2.3.0.jar -P /tmp
 
           # Add to classpath
-          export CLASSPATH=$CLASSPATH:/tmp/jaxb-api-2.2.11.jar:/tmp/jaxb-runtime-2.2.11.jar
+          export CLASSPATH=$CLASSPATH:/tmp/jaxb-api-2.3.0.jar:/tmp/jaxb-runtime-2.3.0.jar
           echo "JAXB dependencies added to the classpath"
 
       - name: Install Node.js & Appium
