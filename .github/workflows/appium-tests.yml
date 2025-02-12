@@ -31,17 +31,24 @@ jobs:
 
       - name: Install & Start Android Emulator
         run: |
+          export ANDROID_HOME=$HOME/Android/Sdk
+          export ANDROID_SDK_ROOT=$ANDROID_HOME
+          export PATH=$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$PATH
+
           echo "Installing required Android components..."
           sdkmanager --install "platform-tools" "platforms;android-30" "emulator" "system-images;android-30;default;x86_64"
+
+          echo "Checking if emulator binary exists..."
+          ls -la $ANDROID_HOME/emulator
 
           echo "Creating AVD..."
           echo "no" | avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
 
           echo "Verifying AVD list..."
-          emulator -list-avds
+          emulator -list-avds || echo "No AVDs found!"
 
           echo "Starting Emulator..."
-          nohup $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-window -gpu off &
+          nohup emulator -avd test_emulator -no-audio -no-window -gpu off &
 
           echo "Waiting for emulator to boot..."
           adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
