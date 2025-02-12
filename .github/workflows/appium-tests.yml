@@ -10,21 +10,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Setup Java 17 (for Appium)
+      - name: Setup Java 8 (for Appium & Android SDK)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '8'
 
-      - name: Install JAXB Dependencies for Java 11+
+      - name: Set Java 8 for SDK Manager
         run: |
-          # Use an alternative repo like JCenter or Sonatype for JAXB
-          wget https://jcenter.bintray.com/org/glassfish/jaxb/jaxb-api/2.3.0/jaxb-api-2.3.0.jar -P /tmp
-          wget https://jcenter.bintray.com/org/glassfish/jaxb/jaxb-runtime/2.3.0/jaxb-runtime-2.3.0.jar -P /tmp
-
-          # Add to classpath
-          export CLASSPATH=$CLASSPATH:/tmp/jaxb-api-2.3.0.jar:/tmp/jaxb-runtime-2.3.0.jar
-          echo "JAXB dependencies added to the classpath"
+          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+          export PATH=$JAVA_HOME/bin:$PATH
+          java -version
 
       - name: Install Node.js & Appium
         uses: actions/setup-node@v3
@@ -69,6 +65,7 @@ jobs:
 
           echo "Waiting for emulator to boot..."
           adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
+
           echo "Emulator is ready!"
 
       - name: Start Appium Server
