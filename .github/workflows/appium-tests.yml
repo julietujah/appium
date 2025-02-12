@@ -36,13 +36,12 @@ jobs:
       - name: Verify if avdmanager is available
         run: |
           which avdmanager || echo "avdmanager not found in path"
-          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/avdmanager --version || echo "avdmanager is not working"
+          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --list || echo "sdkmanager is not working"
 
-      - name: Create & Start Emulator
+      - name: Create Emulator AVD
         run: |
-          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
-          emulator -list-avds || echo "No AVDs found!"
-          nohup $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-window -gpu off &
+          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;default;x86_64"
+          /usr/local/lib/android/sdk/emulator/emulator -avd test_emulator -no-audio -no-window -gpu off &
           echo "Waiting for emulator to boot..."
           adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
           echo "Emulator is ready!"
