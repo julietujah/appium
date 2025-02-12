@@ -16,6 +16,9 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Install JAXB for Java 11+
+        run: sudo apt-get install -y libjaxb-java
+
       - name: Install Node.js & Appium
         uses: actions/setup-node@v3
         with:
