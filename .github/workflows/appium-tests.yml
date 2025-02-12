@@ -10,13 +10,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Setup Java 17 (for sdkmanager)
+      - name: Setup Java 17 (for sdkmanager and appium)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Java 8 (for Appium & Android SDK)
+      - name: Setup Java 8 (for Appium and Android SDK compatibility)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
@@ -29,23 +29,27 @@ jobs:
       - run: npm install -g appium
       - run: appium --version
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Download and Install Android SDK Command-line Tools
+        run: |
+          # Manually download command-line tools to avoid version conflicts
+          wget https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip -P /tmp
+          unzip -o /tmp/commandlinetools-linux-12266719_latest.zip -d /usr/local/lib/android/sdk
 
-      - name: Accept Android SDK Licenses with JDK 17
+      - name: Set JAVA_HOME for SDK manager (Force JDK 17 usage)
         run: |
           export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
           export PATH=$JAVA_HOME/bin:$PATH
-          yes | sdkmanager --licenses
+          echo "JAVA_HOME is set to $JAVA_HOME"
+          # Accept Android SDK Licenses
+          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
       - name: Install Android Emulator
         run: |
           export ANDROID_HOME=/usr/local/lib/android/sdk
           export ANDROID_SDK_ROOT=$ANDROID_HOME
           export PATH=$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$PATH
-
           echo "Installing required Android components..."
-          sdkmanager --install "platform-tools" "platforms;android-30" "emulator" "system-images;android-30;default;x86_64"
+          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "platforms;android-30" "emulator" "system-images;android-30;default;x86_64"
 
       - name: Verify Emulator Installation
         run: |
@@ -56,19 +60,14 @@ jobs:
         run: |
           export ANDROID_HOME=/usr/local/lib/android/sdk
           export PATH=$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$PATH
-
           echo "Creating AVD..."
           echo "no" | avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
-
           echo "Verifying AVD list..."
           emulator -list-avds || echo "No AVDs found!"
-
           echo "Starting Emulator..."
           nohup $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-window -gpu off &
-
           echo "Waiting for emulator to boot..."
           adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
-
           echo "Emulator is ready!"
 
       - name: Start Appium Server
@@ -76,11 +75,6 @@ jobs:
 
       - name: Run Appium Tests
         run: ./gradlew test
-
-      - name: Stop Appium Server & Emulator
-        run: |
-          pkill -f appium
-          adb emu kill
 
       - name: Stop Appium Server & Emulator
         run: |
