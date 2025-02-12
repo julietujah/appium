@@ -36,11 +36,11 @@ jobs:
       - name: Verify if avdmanager is available
         run: |
           which avdmanager || echo "avdmanager not found in path"
-          avdmanager --version || echo "avdmanager is not working"
+          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/avdmanager --version || echo "avdmanager is not working"
 
       - name: Create & Start Emulator
         run: |
-          avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
+          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
           emulator -list-avds || echo "No AVDs found!"
           nohup $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-window -gpu off &
           echo "Waiting for emulator to boot..."
