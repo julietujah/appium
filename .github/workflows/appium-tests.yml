@@ -1,0 +1,42 @@
+name: Appium Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Install Node.js & Appium
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm install -g appium
+      - run: appium --version
+
+      - name: Start Appium Server
+        run: appium --log-level error &
+      
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Start Android Emulator
+        run: |
+          echo "Starting Emulator"
+          $ANDROID_HOME/emulator/emulator -avd Pixel_4_API_30 -no-audio -no-window &
+          adb wait-for-device shell "while [[ -z \$(getprop sys.boot_completed) ]]; do sleep 1; done;"
+
+      - name: Run Appium Tests
+        run: ./gradlew test
+
+      - name: Stop Appium Server
+        run: pkill -f appium
