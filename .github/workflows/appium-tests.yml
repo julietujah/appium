@@ -23,19 +23,22 @@ jobs:
       - run: npm install -g appium
       - run: appium --version
 
-      - name: Start Appium Server
-        run: appium --log-level error &
-      
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Start Android Emulator
+      - name: Accept Android SDK Licenses
+        run: yes | sdkmanager --licenses
+
+      - name: Install & Start Android Emulator
         run: |
-          echo "Installing system images..."
-          sdkmanager --install "system-images;android-30;default;x86_64"
+          echo "Installing required Android components..."
+          sdkmanager --install "platform-tools" "platforms;android-30" "emulator" "system-images;android-30;default;x86_64"
 
           echo "Creating AVD..."
-          avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel"
+          echo "no" | avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
+
+          echo "Verifying AVD list..."
+          emulator -list-avds
 
           echo "Starting Emulator..."
           nohup $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-window -gpu off &
@@ -43,8 +46,15 @@ jobs:
           echo "Waiting for emulator to boot..."
           adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
 
+          echo "Emulator is ready!"
+
+      - name: Start Appium Server
+        run: appium --log-level error &
+
       - name: Run Appium Tests
         run: ./gradlew test
 
-      - name: Stop Appium Server
-        run: pkill -f appium
+      - name: Stop Appium Server & Emulator
+        run: |
+          pkill -f appium
+          adb emu kill
