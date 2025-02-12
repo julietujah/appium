@@ -31,9 +31,17 @@ jobs:
 
       - name: Start Android Emulator
         run: |
-          echo "Starting Emulator"
-          $ANDROID_HOME/emulator/emulator -avd Pixel_4_API_30 -no-audio -no-window &
-          adb wait-for-device shell "while [[ -z \$(getprop sys.boot_completed) ]]; do sleep 1; done;"
+          echo "Installing system images..."
+          sdkmanager --install "system-images;android-30;default;x86_64"
+
+          echo "Creating AVD..."
+          avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel"
+
+          echo "Starting Emulator..."
+          nohup $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-window -gpu off &
+
+          echo "Waiting for emulator to boot..."
+          adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
 
       - name: Run Appium Tests
         run: ./gradlew test
