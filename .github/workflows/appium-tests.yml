@@ -43,33 +43,52 @@ jobs:
           which avdmanager || echo "avdmanager not found"
           which emulator || echo "emulator not found"
 
-      - name: Install System Image and Create Emulator
+      - name: List Available AVDs (Debug)
+        run: |
+          echo "Checking existing AVDs..."
+          /usr/local/lib/android/sdk/emulator/emulator -list-avds || echo "No AVDs found!"
+
+      - name: Install System Image and Create Emulator AVD
         run: |
           export ANDROID_HOME=/usr/local/lib/android/sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
-          
-          # Ensure system image is installed
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;default;x86_64"
-          
-          # Create AVD with explicit ABI
-          echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --abi x86_64 --force
-          
-          # Verify AVD creation
-          $ANDROID_HOME/emulator/emulator -list-avds || echo "No AVDs found!"
+      
+          # Install system image if not installed
+          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;default;x86_64"
+      
+          # Create AVD only if it doesn't exist
+          if [ ! -d "$HOME/.android/avd/test_emulator.avd" ]; then
+            echo "Creating AVD: test_emulator"
+            echo "no" | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
+          else
+            echo "AVD already exists!"
+          fi
+      
+          # Confirm AVD creation
+          /usr/local/lib/android/sdk/emulator/emulator -list-avds || echo "No AVDs found!"
 
       - name: Start Emulator
         run: |
           export ANDROID_HOME=/usr/local/lib/android/sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
+      
+          echo "Available AVDs:"
+          /usr/local/lib/android/sdk/emulator/emulator -list-avds
+      
+          # Ensure the AVD exists before launching
+          if ! /usr/local/lib/android/sdk/emulator/emulator -list-avds | grep -q "test_emulator"; then
+            echo "ERROR: test_emulator not found!"
+            exit 1
+          fi
 
-          # Start the emulator in headless mode with optimizations
+          # Start emulator in optimized mode
           nohup $ANDROID_HOME/emulator/emulator -avd test_emulator \
               -no-audio -no-window -gpu swiftshader_indirect \
               -no-boot-anim -no-snapshot-save -memory 4096 -cores 2 &
 
           echo "Waiting for emulator to boot..."
-          
-          # Reduce wait time by checking boot completion more efficiently
+
+          # Efficient boot check
           boot_complete=false
           for i in {1..60}; do
             boot_status=$(adb shell getprop sys.boot_completed 2>/dev/null)
