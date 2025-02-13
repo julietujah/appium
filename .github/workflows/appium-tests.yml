@@ -47,6 +47,12 @@ jobs:
           # Confirm AVD is created
           /usr/local/lib/android/sdk/emulator/emulator -list-avds || echo "No AVDs found!"
 
+      - name: Verify AVD Location
+        run: |
+          # Check if the AVD file is present in the expected location
+          ls $HOME/.android/avd || echo "AVD directory not found"
+          ls $ANDROID_SDK_ROOT/avd || echo "AVD directory not found"
+
       - name: Start Emulator
         run: |
           # Ensure AVD exists and start the emulator
@@ -61,11 +67,6 @@ jobs:
 
       - name: Run Appium Tests
         run: ./gradlew test
-
-      - name: Stop Appium Server & Emulator
-        run: |
-          pkill -f appium
-          adb emu kill
 
       - name: Stop Appium Server & Emulator
         run: |
