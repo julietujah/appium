@@ -42,8 +42,8 @@ jobs:
         run: |
           # Install system image if not installed
           /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;default;x86_64"
-          # Create the AVD with verbose output for debugging
-          echo "no" | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force -v
+          # Create the AVD without the '-v' flag
+          echo "no" | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
           # Check the created AVD
           /usr/local/lib/android/sdk/emulator/emulator -list-avds || echo "No AVDs found!"
 
