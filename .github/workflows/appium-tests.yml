@@ -18,50 +18,58 @@ jobs:
 
       - name: Install Android SDK Command-line Tools
         run: |
-          # Download and unzip the latest command-line tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip -P /tmp
-          unzip -o /tmp/commandlinetools-linux-12266719_latest.zip -d /usr/local/lib/android/sdk
-          # Install platform-tools, emulator, and system-images
-          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "emulator" "system-images;android-30;default;x86_64"
-          # Accept licenses
-          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-
-      - name: Set Environment Variables
-        run: |
+          # Set SDK paths
           export ANDROID_HOME=/usr/local/lib/android/sdk
           export ANDROID_SDK_ROOT=$ANDROID_HOME
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
-          echo "ANDROID_HOME is set to $ANDROID_HOME"
-          echo "PATH is set to $PATH"
-          # Check if adb, avdmanager, emulator are available in the path
+          
+          # Persist environment variables for all steps
+          echo "export ANDROID_HOME=$ANDROID_HOME" >> ~/.bashrc
+          echo "export ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> ~/.bashrc
+          echo "export PATH=$PATH" >> ~/.bashrc
+          
+          # Download and install Android SDK tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip -P /tmp
+          unzip -o /tmp/commandlinetools-linux-12266719_latest.zip -d $ANDROID_HOME
+          
+          # Install required Android packages
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "emulator" "system-images;android-30;default;x86_64"
+          
+          # Accept licenses
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          
+          # Verify tools installation
           which adb || echo "adb not found"
           which avdmanager || echo "avdmanager not found"
           which emulator || echo "emulator not found"
 
-      - name: Install System Image and Create Emulator AVD
+      - name: Install System Image and Create Emulator
         run: |
-          # Install system image if not installed
-          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;default;x86_64"
-          # Create the AVD without the '-v' flag
-          echo "no" | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
-          # Check the created AVD
-          /usr/local/lib/android/sdk/emulator/emulator -list-avds || echo "No AVDs found!"
-
-      - name: Verify AVD Location
-        run: |
-          # Check if the AVD file is present in the specified directory
-          echo "Checking AVD directory..."
-          ls /usr/local/lib/android/sdk/avd || echo "AVD directory not found"
-          ls /usr/local/lib/android/sdk/avd/test_emulator.avd || echo "AVD file not found"
-          ls $HOME/.android/avd || echo "No AVDs found in home directory"
-          ls $ANDROID_HOME/avd || echo "No AVDs found in SDK directory"
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
+          
+          # Ensure system image is installed
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;default;x86_64"
+          
+          # Create AVD with explicit ABI
+          echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --abi x86_64 --force
+          
+          # Verify AVD creation
+          $ANDROID_HOME/emulator/emulator -list-avds || echo "No AVDs found!"
 
       - name: Start Emulator
         run: |
-          # Ensure AVD exists and start the emulator
-          /usr/local/lib/android/sdk/emulator/emulator -list-avds
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
+          
+          # Start the emulator in headless mode
           nohup $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-window -gpu off &
+
+          # Wait for emulator to boot
           echo "Waiting for emulator to boot..."
+          sleep 60
+          
+          adb devices
           adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
           echo "Emulator is ready!"
 
