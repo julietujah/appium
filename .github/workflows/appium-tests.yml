@@ -32,8 +32,10 @@ jobs:
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
           echo "ANDROID_HOME is set to $ANDROID_HOME"
           echo "PATH is set to $PATH"  # Ensure that the path contains the cmdline-tools directory
+          # Check if adb is available
+          which adb || echo "adb not found"
 
-      - name: Create Emulator AVD
+      - name: Install System Image and Create Emulator AVD
         run: |
           # Install system image and create AVD
           /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;default;x86_64"
@@ -44,6 +46,8 @@ jobs:
 
       - name: Start Emulator
         run: |
+          # Ensure AVD is listed correctly
+          /usr/local/lib/android/sdk/emulator/emulator -list-avds
           nohup $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-window -gpu off &
           echo "Waiting for emulator to boot..."
           adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
@@ -54,6 +58,11 @@ jobs:
 
       - name: Run Appium Tests
         run: ./gradlew test
+
+      - name: Stop Appium Server & Emulator
+        run: |
+          pkill -f appium
+          adb emu kill
 
       - name: Stop Appium Server & Emulator
         run: |
