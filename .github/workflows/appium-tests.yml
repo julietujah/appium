@@ -16,18 +16,20 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Android SDK Command-line Tools
+      - name: Install Android SDK and Tools
         run: |
           export ANDROID_HOME=/usr/local/lib/android/sdk
           export ANDROID_SDK_ROOT=$ANDROID_HOME
+          export ANDROID_AVD_HOME=$HOME/.android/avd
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
-          
+
           echo "Setting environment variables..."
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> $GITHUB_ENV
           echo "PATH=$PATH" >> $GITHUB_ENV
 
-          mkdir -p ~/.android/avd
+          mkdir -p "$ANDROID_AVD_HOME"
 
           echo "Downloading Android command-line tools..."
           wget https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip -P /tmp
@@ -49,23 +51,22 @@ jobs:
           source $GITHUB_ENV
 
           echo "Checking if AVD directory exists..."
-          if [ ! -d "$HOME/.android/avd" ]; then
-            echo "AVD directory is missing! Creating it now..."
-            mkdir -p "$HOME/.android/avd"
-          fi
+          mkdir -p "$ANDROID_AVD_HOME"
+          chmod -R 777 "$ANDROID_AVD_HOME"  # Ensure correct permissions
+          ls -l "$ANDROID_AVD_HOME" || echo "AVD directory is missing!"
 
           echo "Checking existing AVDs..."
           $ANDROID_HOME/emulator/emulator -list-avds || echo "No AVDs found yet."
 
           echo "Installing system image if not already installed..."
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;default;x86_64"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;default/x86_64"
 
           echo "Creating AVD: test_emulator"
-          echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
-            -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
+          echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator \
+            -k "system-images;android-30;default/x86_64" --device "pixel" --force -v
 
           echo "Confirming AVD creation..."
-          ls -l ~/.android/avd
+          ls -l "$ANDROID_AVD_HOME"
           $ANDROID_HOME/emulator/emulator -list-avds
 
       - name: Start Emulator
