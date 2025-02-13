@@ -58,12 +58,10 @@ jobs:
           echo "Checking existing AVDs..."
           $ANDROID_HOME/emulator/emulator -list-avds || echo "No AVDs found yet."
 
-          echo "Installing system image if not already installed..."
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;default/x86_64"
-
           echo "Creating AVD: test_emulator"
+          $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager delete avd -n test_emulator || echo "No existing AVD to delete"
           echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator \
-            -k "system-images;android-30;default/x86_64" --device "pixel" --force -v
+            -k "system-images;android-30;default;x86_64" --device "pixel" --force -v
 
           echo "Confirming AVD creation..."
           ls -l "$ANDROID_AVD_HOME"
@@ -89,11 +87,12 @@ jobs:
           boot_complete=false
           for i in {1..60}; do
             boot_status=$(adb shell getprop sys.boot_completed 2>/dev/null)
+            echo "Boot status check $i: $boot_status"
             if [[ "$boot_status" == "1" ]]; then
               boot_complete=true
               break
             fi
-            sleep 2
+            sleep 5
           done
 
           if [[ "$boot_complete" == "true" ]]; then
@@ -105,7 +104,9 @@ jobs:
           fi
 
       - name: Start Appium Server
-        run: appium --log-level error &
+        run: |
+          appium --log-level error &
+          sleep 5  # Allow Appium server to fully start
 
       - name: Run Appium Tests
         run: ./gradlew test
