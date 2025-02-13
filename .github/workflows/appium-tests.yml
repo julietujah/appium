@@ -42,19 +42,19 @@ jobs:
         run: |
           # Install system image if not installed
           /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;default;x86_64"
+          # Set a custom AVD directory
+          export AVD_DIR=$ANDROID_HOME/avd
+          mkdir -p $AVD_DIR
           # Create the AVD if it doesn't exist
-          echo "no" | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
+          echo "no" | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force --path $AVD_DIR/test_emulator
           # Confirm AVD is created
           /usr/local/lib/android/sdk/emulator/emulator -list-avds || echo "No AVDs found!"
 
       - name: Verify AVD Location
         run: |
-          # Check if the AVD file is present in the expected location
-          ls $HOME/.android/avd || echo "AVD directory not found"
-          ls $ANDROID_SDK_ROOT/avd || echo "AVD directory not found"
-          # Check AVD files
-          ls $ANDROID_SDK_ROOT/avd/test_emulator.avd || echo "AVD file not found"
-          ls $HOME/.android/avd/test_emulator.avd || echo "AVD file not found"
+          # Check if the AVD file is present in the specified directory
+          ls $ANDROID_HOME/avd || echo "AVD directory not found"
+          ls $ANDROID_HOME/avd/test_emulator.avd || echo "AVD file not found"
 
       - name: Start Emulator
         run: |
