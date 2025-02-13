@@ -22,60 +22,64 @@ jobs:
           export ANDROID_SDK_ROOT=$ANDROID_HOME
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
           
-          # Ensure directories exist
+          echo "Setting environment variables..."
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "PATH=$PATH" >> $GITHUB_ENV
+
           mkdir -p ~/.android/avd
-          
-          # Persist environment variables for later steps
-          echo "export ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "export PATH=$PATH" >> $GITHUB_ENV
-          
-          # Download and install command-line tools
+
+          echo "Downloading Android command-line tools..."
           wget https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip -P /tmp
           unzip -o /tmp/commandlinetools-linux-12266719_latest.zip -d $ANDROID_HOME
-          
-          # Install required SDK packages
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "emulator" "system-images;android-30;default;x86_64"
-          
-          # Accept licenses
+
+          echo "Installing required Android SDK packages..."
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "emulator" "system-images;android-30;default;x86_64"
+
+          echo "Accepting licenses..."
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-          
-          # Verify installation
-          which adb || echo "adb not found"
-          which avdmanager || echo "avdmanager not found"
-          which emulator || echo "emulator not found"
+
+          echo "Verifying installed tools..."
+          which adb || echo "adb not found!"
+          which avdmanager || echo "avdmanager not found!"
+          which emulator || echo "emulator not found!"
 
       - name: Create Emulator AVD
         run: |
           source $GITHUB_ENV
-          
-          echo "Checking AVD location..."
-          ls -l ~/.android/avd || echo "AVD directory is missing!"
 
-          # Ensure the AVD exists before trying to start it
-          if ! $ANDROID_HOME/emulator/emulator -list-avds | grep -q "test_emulator"; then
-            echo "Creating AVD: test_emulator"
-            echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
-              -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
-          else
-            echo "AVD already exists!"
+          echo "Checking if AVD directory exists..."
+          if [ ! -d "$HOME/.android/avd" ]; then
+            echo "AVD directory is missing! Creating it now..."
+            mkdir -p "$HOME/.android/avd"
           fi
-          
-          # Confirm AVD creation
-          echo "Available AVDs after creation:"
+
+          echo "Checking existing AVDs..."
+          $ANDROID_HOME/emulator/emulator -list-avds || echo "No AVDs found yet."
+
+          echo "Installing system image if not already installed..."
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;default;x86_64"
+
+          echo "Creating AVD: test_emulator"
+          echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
+            -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
+
+          echo "Confirming AVD creation..."
+          ls -l ~/.android/avd
           $ANDROID_HOME/emulator/emulator -list-avds
 
       - name: Start Emulator
         run: |
           source $GITHUB_ENV
 
-          echo "Checking AVDs before starting..."
+          echo "Checking available AVDs before starting..."
           $ANDROID_HOME/emulator/emulator -list-avds
 
           if ! $ANDROID_HOME/emulator/emulator -list-avds | grep -q "test_emulator"; then
             echo "ERROR: test_emulator not found!"
             exit 1
           fi
-          
+
           nohup $ANDROID_HOME/emulator/emulator -avd test_emulator \
             -no-audio -no-window -gpu swiftshader_indirect \
             -no-boot-anim -no-snapshot-save -memory 4096 -cores 2 &
