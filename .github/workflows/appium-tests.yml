@@ -52,6 +52,9 @@ jobs:
           # Check if the AVD file is present in the expected location
           ls $HOME/.android/avd || echo "AVD directory not found"
           ls $ANDROID_SDK_ROOT/avd || echo "AVD directory not found"
+          # Check AVD files
+          ls $ANDROID_SDK_ROOT/avd/test_emulator.avd || echo "AVD file not found"
+          ls $HOME/.android/avd/test_emulator.avd || echo "AVD file not found"
 
       - name: Start Emulator
         run: |
