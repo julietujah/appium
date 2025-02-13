@@ -21,9 +21,10 @@ jobs:
           # Download and unzip the latest command-line tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip -P /tmp
           unzip -o /tmp/commandlinetools-linux-12266719_latest.zip -d /usr/local/lib/android/sdk
-          # Accept licenses and install SDK components
-          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+          # Install platform-tools, emulator, and system-images
           /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "emulator" "system-images;android-30;default;x86_64"
+          # Accept licenses
+          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
       - name: Set Environment Variables
         run: |
@@ -31,22 +32,24 @@ jobs:
           export ANDROID_SDK_ROOT=$ANDROID_HOME
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
           echo "ANDROID_HOME is set to $ANDROID_HOME"
-          echo "PATH is set to $PATH"  # Ensure that the path contains the cmdline-tools directory
-          # Check if adb is available
+          echo "PATH is set to $PATH"
+          # Check if adb, avdmanager, emulator are available in the path
           which adb || echo "adb not found"
+          which avdmanager || echo "avdmanager not found"
+          which emulator || echo "emulator not found"
 
       - name: Install System Image and Create Emulator AVD
         run: |
-          # Install system image and create AVD
+          # Install system image if not installed
           /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;default;x86_64"
+          # Create the AVD if it doesn't exist
           echo "no" | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator -k "system-images;android-30;default;x86_64" --device "pixel" --force
-
-      - name: List AVDs
-        run: /usr/local/lib/android/sdk/emulator/emulator -list-avds || echo "No AVDs found!"
+          # Confirm AVD is created
+          /usr/local/lib/android/sdk/emulator/emulator -list-avds || echo "No AVDs found!"
 
       - name: Start Emulator
         run: |
-          # Ensure AVD is listed correctly
+          # Ensure AVD exists and start the emulator
           /usr/local/lib/android/sdk/emulator/emulator -list-avds
           nohup $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-window -gpu off &
           echo "Waiting for emulator to boot..."
