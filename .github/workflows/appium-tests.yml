@@ -58,10 +58,12 @@ jobs:
           echo "Checking existing AVDs..."
           $ANDROID_HOME/emulator/emulator -list-avds || echo "No AVDs found yet."
 
-          echo "Creating AVD: test_emulator"
+          echo "Deleting any existing AVD named test_emulator..."
           $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager delete avd -n test_emulator || echo "No existing AVD to delete"
+
+          echo "Creating AVD: test_emulator"
           echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator \
-            -k "system-images;android-30;default;x86_64" --device "pixel" --force -v
+            -k "system-images;android-30;default;x86_64" --device "pixel" --force
 
           echo "Confirming AVD creation..."
           ls -l "$ANDROID_AVD_HOME"
