@@ -36,24 +36,14 @@ jobs:
           unzip -o /tmp/commandlinetools-linux-12266719_latest.zip -d $ANDROID_HOME
 
           echo "Installing required Android SDK packages..."
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "emulator" "system-images;android-30;default;x86_64"
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "emulator" "system-images;android-30;default;armeabi-v7a"
 
           echo "Accepting licenses..."
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
-          echo "Verifying installed tools..."
-          which adb || echo "adb not found!"
-          which avdmanager || echo "avdmanager not found!"
-          which emulator || echo "emulator not found!"
-
-      - name: Create Emulator AVD
+      - name: Create Emulator AVD (ARM)
         run: |
           source $GITHUB_ENV
-
-          echo "Checking if AVD directory exists..."
-          mkdir -p "$ANDROID_AVD_HOME"
-          chmod -R 777 "$ANDROID_AVD_HOME"  # Ensure correct permissions
-          ls -l "$ANDROID_AVD_HOME" || echo "AVD directory is missing!"
 
           echo "Checking existing AVDs..."
           $ANDROID_HOME/emulator/emulator -list-avds || echo "No AVDs found yet."
@@ -61,29 +51,19 @@ jobs:
           echo "Deleting any existing AVD named test_emulator..."
           $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager delete avd -n test_emulator || echo "No existing AVD to delete"
 
-          echo "Creating AVD: test_emulator"
+          echo "Creating AVD: test_emulator (ARM-based)"
           echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n test_emulator \
-            -k "system-images;android-30;default;x86_64" --device "pixel" --force
+            -k "system-images;android-30;default;armeabi-v7a" --device "pixel" --force
 
-          echo "Confirming AVD creation..."
-          ls -l "$ANDROID_AVD_HOME"
-          $ANDROID_HOME/emulator/emulator -list-avds
-
-      - name: Start Emulator
+      - name: Start Emulator (ARM)
         run: |
           source $GITHUB_ENV
 
           echo "Checking available AVDs before starting..."
           $ANDROID_HOME/emulator/emulator -list-avds
 
-          if ! $ANDROID_HOME/emulator/emulator -list-avds | grep -q "test_emulator"; then
-            echo "ERROR: test_emulator not found!"
-            exit 1
-          fi
-
           nohup $ANDROID_HOME/emulator/emulator -avd test_emulator \
-            -no-audio -no-window -gpu swiftshader_indirect \
-            -no-boot-anim -no-snapshot-save -memory 4096 -cores 2 -accel off &
+            -no-audio -no-window -gpu swiftshader_indirect -no-boot-anim -no-snapshot-save -memory 2048 -cores 2 &
 
           echo "Waiting for emulator to boot..."
           boot_complete=false
@@ -103,7 +83,6 @@ jobs:
             echo "Emulator failed to start in time."
             exit 1
           fi
-
 
       - name: Start Appium Server
         run: |
