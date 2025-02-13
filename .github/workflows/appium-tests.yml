@@ -61,17 +61,32 @@ jobs:
         run: |
           export ANDROID_HOME=/usr/local/lib/android/sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
-          
-          # Start the emulator in headless mode
-          nohup $ANDROID_HOME/emulator/emulator -avd test_emulator -no-audio -no-window -gpu off &
 
-          # Wait for emulator to boot
+          # Start the emulator in headless mode with optimizations
+          nohup $ANDROID_HOME/emulator/emulator -avd test_emulator \
+              -no-audio -no-window -gpu swiftshader_indirect \
+              -no-boot-anim -no-snapshot-save -memory 4096 -cores 2 &
+
           echo "Waiting for emulator to boot..."
-          sleep 60
           
-          adb devices
-          adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
-          echo "Emulator is ready!"
+          # Reduce wait time by checking boot completion more efficiently
+          boot_complete=false
+          for i in {1..60}; do
+            boot_status=$(adb shell getprop sys.boot_completed 2>/dev/null)
+            if [[ "$boot_status" == "1" ]]; then
+              boot_complete=true
+              break
+            fi
+            sleep 2
+          done
+
+          if [[ "$boot_complete" == "true" ]]; then
+            echo "Emulator is ready!"
+            adb devices
+          else
+            echo "Emulator failed to start in time."
+            exit 1
+          fi
 
       - name: Start Appium Server
         run: appium --log-level error &
